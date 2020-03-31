@@ -1,16 +1,25 @@
 from datetime import datetime
 from django.utils.timesince import timesince
 from rest_framework import serializers
-from news.models import Article
+from news.models import Article, Journalist
+
+
+class JournalistSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Journalist
+        fields = "__all__"
+
 
 class ArticleSerializer(serializers.ModelSerializer):
 
     time_since_publication = serializers.SerializerMethodField()
-
+#    author = JournalistSerializer()
+#    author = serializers.StringRelatedField()
 
     class Meta:
         model = Article
-        #fields = "__all__" all the fields of the model
+#        fields = "__all__" all the fields of the model
         exclude = ("id",)
         # fields = "__all__"
         # fields =("title", "description", "body")
@@ -20,7 +29,6 @@ class ArticleSerializer(serializers.ModelSerializer):
         now = datetime.now()
         time_delta = timesince(publication_date, now)
         return time_delta
-
 
     def validate(self, data):
         """ check that description and title are different"""
@@ -32,6 +40,17 @@ class ArticleSerializer(serializers.ModelSerializer):
         if len(value) < 30:
             raise serializers.ValidationError("The title must be more than 60 characters long")
         return value
+
+
+class JournalistSerializer(serializers.ModelSerializer):
+    articles = serializers.HyperlinkedRelatedField(many=True,
+                                                   read_only=True,
+                                                   view_name="article-detail")
+    # articles = ArticleSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Journalist
+        fields = "__all__"
 
 
 # class ArticleSerializer(serializers.Serializer):
